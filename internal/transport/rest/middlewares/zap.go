@@ -3,6 +3,7 @@ package middlewares
 import (
 	"time"
 
+	"github.com/antalkon/Go_prod_tmpl/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -24,6 +25,16 @@ func (s *Set) zapRequestLogger() echo.MiddlewareFunc {
 			start := time.Now()
 			req, res := c.Request(), c.Response()
 
+			// create request-scoped logger and put into context
+			reqLogger := s.log.With(
+				zap.String("method", req.Method),
+				zap.String("path", req.URL.Path),
+				zap.String("ip", c.RealIP()),
+				zap.String("req_id", res.Header().Get(echo.HeaderXRequestID)),
+			)
+			ctx := logger.WithContext(req.Context(), reqLogger)
+			c.SetRequest(c.Request().WithContext(ctx))
+
 			err := next(c)
 
 			fields := []zap.Field{
@@ -35,10 +46,11 @@ func (s *Set) zapRequestLogger() echo.MiddlewareFunc {
 				zap.String("req_id", res.Header().Get(echo.HeaderXRequestID)),
 			}
 			if err != nil {
-				s.log.Error("http_request", append(fields, zap.Error(err))...)
+				reqLogger.Error("http_request", append(fields, zap.Error(err))...)
 				return err
 			}
-			s.log.Info("http_request", fields...)
+			reqLogger.Info("http_request", fields...)
+			_ = ctx
 			return nil
 		}
 	}

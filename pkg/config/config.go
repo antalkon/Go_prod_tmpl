@@ -23,6 +23,18 @@ type Config struct {
 	ServerPort  int
 	HTTPTimeout time.Duration
 	Env         Env
+	// DB
+	DatabaseDSN       string
+	DBMaxOpenConns    int
+	DBMaxIdleConns    int
+	DBConnMaxLifetime time.Duration
+	AutoMigrate       bool
+	// Logging
+	AppLogLevel string
+	// HTTP timeouts (optional overrides)
+	HTTPReadTimeout  time.Duration
+	HTTPWriteTimeout time.Duration
+	HTTPIdleTimeout  time.Duration
 }
 
 func Load() (*Config, error) {
@@ -71,5 +83,52 @@ func Load() (*Config, error) {
 		ServerPort:  port,
 		HTTPTimeout: timeout,
 		Env:         env,
+		// defaults for new fields
+		DatabaseDSN:       os.Getenv("DATABASE_DSN"),
+		DBMaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 25),
+		DBMaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 5),
+		DBConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", time.Hour),
+		AutoMigrate:       getEnvBool("AUTO_MIGRATE", false),
+		AppLogLevel:       getEnvString("APP_LOG_LEVEL", "info"),
+		HTTPReadTimeout:   getEnvDuration("HTTP_READ_TIMEOUT", timeout),
+		HTTPWriteTimeout:  getEnvDuration("HTTP_WRITE_TIMEOUT", timeout),
+		HTTPIdleTimeout:   getEnvDuration("HTTP_IDLE_TIMEOUT", 2*timeout),
 	}, nil
+}
+
+func getEnvString(key, def string) string {
+	if v, ok := os.LookupEnv(key); ok && strings.TrimSpace(v) != "" {
+		return v
+	}
+	return def
+}
+
+func getEnvInt(key string, def int) int {
+	if v, ok := os.LookupEnv(key); ok && strings.TrimSpace(v) != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
+}
+
+func getEnvBool(key string, def bool) bool {
+	if v, ok := os.LookupEnv(key); ok && strings.TrimSpace(v) != "" {
+		switch strings.ToLower(v) {
+		case "1", "true", "yes":
+			return true
+		case "0", "false", "no":
+			return false
+		}
+	}
+	return def
+}
+
+func getEnvDuration(key string, def time.Duration) time.Duration {
+	if v, ok := os.LookupEnv(key); ok && strings.TrimSpace(v) != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return def
 }

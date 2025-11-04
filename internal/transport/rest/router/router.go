@@ -7,5 +7,8 @@ import (
 
 func Register(e *echo.Echo, ping *handlers.PingHandler) {
 	api := e.Group("/api/v1")
-	api.GET("/ping", ping.Ping)
+	{
+		api.GET("/ping", ping.Ping)
+	}
+
 }

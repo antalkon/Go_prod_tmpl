@@ -1,0 +1,40 @@
+# Binaries for programs and plugins
+/bin/
+/build/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, coverage
+*.test
+*.out
+
+# Dependencies
+/vendor/
+
+# Environment files
+.env
+.env.*
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+*.swp
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Generated swagger docs
+/docs/swagger.json
+/docs/swagger.yaml
+/docs/docs.go
+
+# Go build cache
+/_cache/
